@@ -1,0 +1,677 @@
+// Hotel Manager — Standalone Hotel Management System
+// Single-tenant hotel booking platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// HOTEL & DOMAIN
+// ============================================================================
+
+/// Hotel entity — the single hotel this instance manages
+model Hotel {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique // URL-friendly identifier
+  description String?  @db.Text
+  
+  // Location
+  address     String
+  city        String
+  state       String
+  country     String   @default("India")
+  pincode     String
+  latitude    Float?
+  longitude   Float?
+  
+  // Contact
+  phone       String
+  email       String
+  whatsapp    String?
+  
+  // Branding
+  logoUrl     String?
+  heroImageUrl String?
+  
+  // Configuration
+  starRating       Int      @default(3) // 1-5
+  bookingModel     BookingModel @default(DAILY)
+  checkInTime      String   @default("14:00")
+  checkOutTime     String   @default("12:00")
+  hourlyMinHours   Int      @default(3)
+  hourlyMaxHours   Int      @default(12)
+  
+  // Theme customization
+  themeConfig      Json?   // { primaryColor, fontFamily, etc. }
+  template         HotelTemplate @default(STARTER)
+  
+  // Status
+  isActive         Boolean @default(true)
+  setupCompleted   Boolean @default(false)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  roomTypes   RoomType[]
+  rooms       Room[]
+  bookings    Booking[]
+  users       User[]
+  reviews     Review[]
+  media       Media[]
+  seoMeta     SEOMeta[]
+  apiKeys     ApiKey[]
+  
+  @@index([city])
+  @@index([isActive])
+}
+
+// ============================================================================
+// ROOMS & INVENTORY
+// ============================================================================
+
+/// Room type (e.g., "Deluxe Ocean View", "Standard Room")
+model RoomType {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  
+  name        String
+  slug        String
+  description String?  @db.Text
+  
+  // Pricing
+  basePriceDaily   Float // Price per night
+  basePriceHourly  Float? // Price per hour (null if daily only)
+  
+  // Capacity
+  maxGuests        Int @default(2)
+  maxExtraGuests   Int @default(0)
+  extraGuestCharge Float @default(0)
+  
+  // Inventory
+  totalRooms       Int @default(1) // Total physical rooms of this type
+  
+  // Features
+  amenities        String[] // ["wifi", "ac", "pool-access"]
+  images           String[] // CDN URLs
+  
+  // Booking settings (override hotel defaults)
+  bookingModelOverride BookingModel?
+  minHours         Int?
+  maxHours         Int?
+  
+  // Status
+  isActive         Boolean @default(true)
+  sortOrder        Int @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  rooms        Room[]
+  inventory    RoomInventory[]
+  hourlySlots  HourlySlot[]
+  bookings     Booking[]
+  
+  @@unique([hotelId, slug])
+  @@index([hotelId, isActive])
+}
+
+/// Physical room instance
+model Room {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomTypeId  String
+  roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  
+  roomNumber  String   // "101", "202A"
+  floor       Int      @default(1)
+  status      RoomStatus @default(AVAILABLE)
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  bookings    Booking[]
+  
+  @@unique([hotelId, roomNumber])
+  @@index([hotelId, roomTypeId, status])
+}
+
+/// Daily inventory (one row per room_type per date)
+model RoomInventory {
+  id            String   @id @default(uuid())
+  roomTypeId    String
+  roomType      RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  
+  date          DateTime @db.Date
+  availableCount Int     @default(0) // Decremented on booking
+  priceOverride Float?   // null = use base_price_daily
+  minStayNights Int      @default(1)
+  isClosed      Boolean  @default(false) // Manually block date
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([roomTypeId, date])
+  @@index([roomTypeId, date])
+}
+
+/// Hourly slots for hourly booking mode
+model HourlySlot {
+  id            String   @id @default(uuid())
+  roomTypeId    String
+  roomType      RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  
+  date          DateTime @db.Date
+  slotStart     String   // "08:00"
+  slotEnd       String   // "11:00"
+  availableCount Int     @default(0)
+  priceOverride Float?   // per hour override
+  isClosed      Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([roomTypeId, date, slotStart, slotEnd])
+  @@index([roomTypeId, date])
+}
+
+// ============================================================================
+// BOOKINGS & PAYMENTS
+// ============================================================================
+
+/// Booking record
+model Booking {
+  id              String   @id @default(uuid())
+  bookingNumber   String   @unique // "BK-20260315-X7K9"
+  
+  hotelId         String
+  hotel           Hotel    @relation(fields: [hotelId], references: [id])
+  guestId         String
+  guest           User     @relation(fields: [guestId], references: [id])
+  roomTypeId      String
+  roomType        RoomType @relation(fields: [roomTypeId], references: [id])
+  assignedRoomId  String?
+  assignedRoom    Room?    @relation(fields: [assignedRoomId], references: [id])
+  
+  // Booking type
+  bookingType     BookingType @default(DAILY)
+  
+  // Daily booking
+  checkInDate     DateTime @db.Date
+  checkOutDate    DateTime? @db.Date
+  
+  // Hourly booking
+  checkInTime     String?  // "14:00"
+  checkOutTime    String?  // "17:00"
+  numHours        Int?
+  
+  // Quantities
+  numRooms        Int @default(1)
+  numGuests       Int @default(1)
+  numExtraGuests  Int @default(0)
+  
+  // Pricing
+  roomTotal       Float
+  extraGuestTotal Float @default(0)
+  taxes           Float @default(0)
+  discountAmount  Float @default(0)
+  totalAmount     Float
+  
+  // Source & status
+  source          BookingSource @default(DIRECT)
+  status          BookingStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Cancellation
+  cancellationReason String?
+  cancelledAt     DateTime?
+  
+  // Guest info (denormalized for quick access)
+  guestName       String
+  guestEmail      String
+  guestPhone      String
+  specialRequests String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  payments        Payment[]
+  review          Review?
+  
+  @@index([hotelId, status])
+  @@index([guestId])
+  @@index([checkInDate])
+  @@index([bookingNumber])
+}
+
+/// Payment record
+model Payment {
+  id              String   @id @default(uuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  
+  gateway         PaymentGateway
+  gatewayPaymentId String? // "pay_xxxxx"
+  gatewayOrderId  String?  // "order_xxxxx"
+  
+  amount          Float
+  currency        String   @default("INR")
+  status          TransactionStatus @default(CREATED)
+  
+  refundAmount    Float    @default(0)
+  refundId        String?
+  
+  metadata        Json?    // Full gateway response
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([bookingId])
+  @@index([gatewayPaymentId])
+}
+
+// ============================================================================
+// USERS & AUTH
+// ============================================================================
+
+/// User account (guests, hotel admins, platform admins)
+model User {
+  id            String   @id @default(uuid())
+  
+  email         String?  @unique
+  phone         String?  @unique
+  password      String?  // Hashed, null for OTP-only users
+  
+  name          String
+  avatarUrl     String?
+  
+  role          UserRole @default(GUEST)
+  hotelId       String?  // null for guests
+  hotel         Hotel?   @relation(fields: [hotelId], references: [id])
+  
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  phoneVerified Boolean  @default(false)
+  
+  lastLoginAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  bookings      Booking[]
+  reviews       Review[]
+  staffPermission StaffPermission?
+  
+  @@index([email])
+  @@index([phone])
+  @@index([hotelId, role])
+}
+
+// ============================================================================
+// REVIEWS & RATINGS
+// ============================================================================
+
+/// Guest reviews
+model Review {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id])
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  guestId     String
+  guest       User     @relation(fields: [guestId], references: [id])
+  
+  rating      Int      // 1-5
+  title       String?
+  comment     String?  @db.Text
+  photos      String[] // CDN URLs
+  
+  hotelReply  String?  @db.Text
+  
+  isVerified  Boolean  @default(true) // Stayed at hotel
+  isPublished Boolean  @default(false) // Moderation
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([hotelId, isPublished])
+  @@index([guestId])
+}
+
+// ============================================================================
+// STAFF PERMISSIONS
+// ============================================================================
+
+/// Granular permissions for hotel staff members
+model StaffPermission {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  canManageBookings   Boolean  @default(true)
+  canManageRooms      Boolean  @default(false)
+  canManagePricing    Boolean  @default(false)
+  canManageReviews    Boolean  @default(true)
+  canManageContent    Boolean  @default(false)
+  canViewAnalytics    Boolean  @default(false)
+  canManageStaff      Boolean  @default(false)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================================================
+// SEO & MEDIA
+// ============================================================================
+
+/// Custom SEO metadata per page per hotel
+model SEOMeta {
+  id            String   @id @default(uuid())
+  hotelId       String
+  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  
+  pageSlug      String   // "homepage", "rooms", "rooms/deluxe"
+  metaTitle     String?
+  metaDescription String?
+  ogImageUrl    String?
+  customJsonLd  Json?
+  canonicalUrl  String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([hotelId, pageSlug])
+}
+
+/// Media files (images, videos)
+model Media {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  
+  url         String
+  thumbnailUrl String?
+  type        MediaType @default(IMAGE)
+  category    MediaCategory @default(HOTEL)
+  altText     String?
+  
+  sortOrder   Int @default(0)
+  width       Int?
+  height      Int?
+  sizeBytes   Int?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([hotelId, category])
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum BookingModel {
+  DAILY
+  HOURLY
+  BOTH
+}
+
+enum BookingType {
+  DAILY
+  HOURLY
+}
+
+enum RoomStatus {
+  AVAILABLE
+  MAINTENANCE
+  BLOCKED
+}
+
+enum BookingSource {
+  DIRECT      // Booked online via hotel website
+  WALK_IN     // Walk-in booking added by staff
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FAILED
+}
+
+enum PaymentGateway {
+  RAZORPAY
+  CASH
+  DEMO
+}
+
+enum TransactionStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum UserRole {
+  GUEST
+  HOTEL_ADMIN
+  HOTEL_STAFF
+}
+
+enum HotelTemplate {
+  STARTER         // Default original layout
+  MODERN_MINIMAL  // Clean, whitespace-heavy, single-column hero
+  LUXURY_RESORT   // Full-bleed images, elegant typography
+  HERITAGE_BOUTIQUE // Warm tones, editorial layout, story-driven
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum MediaCategory {
+  HOTEL
+  ROOM
+  AMENITY
+  GALLERY
+}
+
+// ============================================================================
+// BLOG
+// ============================================================================
+
+/// Blog post for SEO content and hotel marketing
+model BlogPost {
+  id          String   @id @default(uuid())
+  
+  hotelId     String?  // null = platform-wide post
+  
+  title       String
+  slug        String   @unique
+  excerpt     String?  @db.Text
+  content     String   @db.Text // Markdown/HTML content
+  coverImage  String?
+  
+  authorId    String
+  
+  category    String?   // "travel-tips", "city-guides", "hotel-news"
+  tags        String[]  // ["udaipur", "rajasthan", "luxury"]
+  
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([hotelId, status])
+  @@index([slug])
+  @@index([status, publishedAt])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ============================================================================
+// PUSH SUBSCRIPTIONS
+// ============================================================================
+
+/// Push notification subscription for Web Push API
+model PushSubscription {
+  id        String   @id @default(uuid())
+  
+  userId    String?  // null for anonymous subscriptions
+  
+  endpoint  String   @unique
+  p256dh    String   // Public key
+  auth      String   // Auth secret
+  
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// ============================================================================
+// AUDIT LOG
+// ============================================================================
+
+/// Audit log entry — records all mutations for compliance
+model AuditLog {
+  id          String   @id @default(uuid())
+  
+  operation   String   // GraphQL mutation name
+  userId      String?
+  userEmail   String?
+  userRole    String?
+  hotelId     String?
+  
+  ip          String?
+  duration    Int?     // milliseconds
+  success     Boolean  @default(true)
+  errorMessage String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([hotelId])
+  @@index([operation])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// IN-APP NOTIFICATION
+// ============================================================================
+
+/// In-app notification for bell icon / inbox
+model Notification {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  
+  type      String   // e.g. "BOOKING_CONFIRMED", "REVIEW_SUBMITTED"
+  title     String
+  body      String?
+  link      String?  // deep link path
+  
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// API KEYS (for external / self-hosted frontends)
+// ============================================================================
+
+/// API key for hotel owners or developers to access hotel data externally
+model ApiKey {
+  id          String   @id @default(uuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  
+  name        String   // e.g. "Production Site", "Mobile App"
+  keyHash     String   @unique // SHA-256 hash of the actual key (never store plaintext)
+  keyPrefix   String   // First 8 chars for identification (e.g. "bsk_a1b2...")
+  
+  permissions ApiKeyPermission[] @default([READ_HOTEL, READ_ROOMS, READ_AVAILABILITY, CREATE_BOOKING])
+  
+  // Rate limiting
+  rateLimitPerMinute Int @default(60)
+  
+  // Allowed origins (CORS). Empty = allow all origins
+  allowedOrigins String[] // e.g. ["https://myhotel.com", "http://localhost:3000"]
+  
+  // Usage tracking
+  lastUsedAt  DateTime?
+  requestCount Int      @default(0)
+  
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime? // null = never expires
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([keyHash])
+  @@index([hotelId])
+}
+
+enum ApiKeyPermission {
+  READ_HOTEL        // Hotel info, theme, branding
+  READ_ROOMS        // Room types, amenities, images
+  READ_AVAILABILITY // Inventory, pricing per date
+  READ_REVIEWS      // Guest reviews
+  READ_BOOKINGS     // List bookings (admin)
+  CREATE_BOOKING    // Create new bookings (guest checkout)
+  MANAGE_BOOKINGS   // Update booking status (admin)
+  MANAGE_ROOMS      // CRUD room types (admin)
+  MANAGE_INVENTORY  // Update pricing/availability (admin)
+}
+
+// ============================================================================
+// BACKUP LOG
+// ============================================================================
+
+/// Database backup history
+model BackupLog {
+  id          String   @id @default(uuid())
+  filename    String
+  sizeBytes   Int
+  triggeredBy String   // userId
+  status      String   // "completed", "failed"
+  createdAt   DateTime @default(now())
+}

@@ -1,0 +1,12 @@
+# This directory should contain SSL certificates.
+# Use Let's Encrypt / certbot for free certificates.
+#
+# Files expected:
+#   YOUR_DOMAIN.crt
+#   YOUR_DOMAIN.key
+#   api.YOUR_DOMAIN.crt
+#   api.YOUR_DOMAIN.key
+#
+# Generate with certbot:
+#   certbot certonly --standalone -d YOUR_DOMAIN -d www.YOUR_DOMAIN
+#   certbot certonly --standalone -d api.YOUR_DOMAIN

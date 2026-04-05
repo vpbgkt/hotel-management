@@ -1,0 +1,47 @@
+{
+  "name": "hotel-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone hotel management and booking platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "turbo run dev --filter=api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "turbo run db:generate --filter=api",
+    "db:push": "turbo run db:push --filter=api",
+    "db:seed": "turbo run db:seed --filter=api",
+    "db:studio": "turbo run db:studio --filter=api",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "prettier": "^3.5.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@11.6.2",
+  "dependencies": {
+    "@sentry/nextjs": "^10.40.0",
+    "@types/compression": "^1.8.1",
+    "compression": "^1.8.1",
+    "effect": "^3.19.19",
+    "helmet": "^8.1.0",
+    "lightningcss": "^1.31.1",
+    "lodash": "^4.17.23"
+  },
+  "optionalDependencies": {
+    "@lightningcss/win32-x64-msvc": "npm:null@*"
+  }
+}

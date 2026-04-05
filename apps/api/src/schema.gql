@@ -1,0 +1,1514 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AdminAnalytics {
+  averageBookingValue: Float!
+  averageStayNights: Float!
+  bookingsBySource: [BookingsBySource!]!
+  bookingsByStatus: [BookingsByStatus!]!
+  monthlyData: [MonthlyDataPoint!]!
+  roomTypePopularity: [RoomTypePopularity!]!
+}
+
+type AdminDashboardStats {
+  monthlyBookings: Int!
+  monthlyRevenue: Float!
+  occupancyRate: Int!
+  occupiedRooms: Int!
+  recentBookings: [Booking!]!
+  todayCheckIns: Int!
+  todayCheckOuts: Int!
+  totalBookings: Int!
+  totalRevenue: Float!
+  totalRooms: Int!
+}
+
+type ApiKeyDeleteResult {
+  message: String!
+  success: Boolean!
+}
+
+"""Permissions that can be assigned to an API key"""
+enum ApiKeyPermission {
+  CREATE_BOOKING
+  MANAGE_BOOKINGS
+  MANAGE_INVENTORY
+  MANAGE_ROOMS
+  READ_AVAILABILITY
+  READ_BOOKINGS
+  READ_HOTEL
+  READ_REVIEWS
+  READ_ROOMS
+}
+
+type ApiKeyType {
+  allowedOrigins: [String!]!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  hotelId: String!
+  id: ID!
+  isActive: Boolean!
+  keyPrefix: String!
+  lastUsedAt: DateTime
+  name: String!
+  permissions: [ApiKeyPermission!]!
+  rateLimitPerMinute: Int!
+  requestCount: Int!
+  updatedAt: DateTime!
+}
+
+input ApplyPriceSuggestionsInput {
+  roomTypeId: String!
+  suggestions: [PriceApplyItem!]!
+}
+
+type ApplySuggestionsResult {
+  applied: Int!
+  skipped: Int!
+}
+
+"""Auth response with tokens"""
+type AuthResponse {
+  accessToken: String
+  message: String
+  refreshToken: String
+  success: Boolean!
+  user: User
+}
+
+type AvailabilityCalendar {
+  basePriceDaily: Float!
+  calendar: [CalendarDay!]!
+  roomTypeId: String!
+  roomTypeName: String!
+  totalRooms: Int!
+}
+
+"""Blog post author"""
+type BlogAuthor {
+  avatarUrl: String
+  id: ID!
+  name: String!
+}
+
+"""Blog post entity"""
+type BlogPost {
+  author: BlogAuthor
+  authorId: String!
+  category: String
+  content: String!
+  coverImage: String
+  createdAt: DateTime!
+  excerpt: String
+  hotelId: String
+  id: ID!
+  metaDescription: String
+  metaTitle: String
+  publishedAt: DateTime
+  slug: String!
+  status: PostStatus!
+  tags: [String!]!
+  title: String!
+  updatedAt: DateTime!
+}
+
+"""Booking entity"""
+type Booking {
+  assignedRoomId: String
+  bookingNumber: String!
+  bookingType: BookingType!
+  cancellationReason: String
+  cancelledAt: DateTime
+  checkInDate: DateTime!
+  checkInTime: String
+  checkOutDate: DateTime
+  checkOutTime: String
+  commissionAmount: Float!
+  createdAt: DateTime!
+  discountAmount: Float!
+  extraGuestTotal: Float!
+  guestEmail: String!
+  guestId: String!
+  guestName: String!
+  guestPhone: String!
+  hotel: BookingHotel
+  hotelId: String!
+  hotelPayout: Float!
+  id: ID!
+  numExtraGuests: Int!
+  numGuests: Int!
+  numHours: Int
+  numRooms: Int!
+  paymentStatus: PaymentStatus!
+  payments: [Payment!]
+  roomTotal: Float!
+  roomType: BookingRoomType
+  roomTypeId: String!
+  source: BookingSource!
+  specialRequests: String
+  status: BookingStatus!
+  taxes: Float!
+  totalAmount: Float!
+  updatedAt: DateTime!
+}
+
+type BookingAnalytics {
+  avgBookingValue: Float!
+  cancellationRate: Int!
+  sourceBreakdown: [SourceBreakdown!]!
+  statusBreakdown: [StatusBreakdown!]!
+  topRoomTypes: [TopRoomType!]!
+  totalBookings: Int!
+  typeBreakdown: [TypeBreakdown!]!
+}
+
+"""Filters for listing bookings"""
+input BookingFiltersInput {
+  bookingType: BookingType
+  fromDate: DateTime
+  guestId: String
+  hotelId: String
+  search: String
+  status: BookingStatus
+  toDate: DateTime
+}
+
+type BookingHotel {
+  address: String!
+  city: String!
+  id: ID!
+  name: String!
+  phone: String!
+  slug: String!
+}
+
+"""Booking model type"""
+enum BookingModel {
+  BOTH
+  DAILY
+  HOURLY
+}
+
+"""Pagination for bookings list"""
+input BookingPaginationInput {
+  limit: Int! = 20
+  page: Int! = 1
+}
+
+"""Booking creation result"""
+type BookingResult {
+  booking: Booking
+  message: String
+  paymentAmount: Float
+  paymentOrderId: String
+  success: Boolean!
+}
+
+type BookingRoomType {
+  id: ID!
+  images: [String!]!
+  name: String!
+  slug: String!
+}
+
+"""Source of the booking"""
+enum BookingSource {
+  DIRECT
+  WALK_IN
+}
+
+"""Status of the booking"""
+enum BookingStatus {
+  CANCELLED
+  CHECKED_IN
+  CHECKED_OUT
+  CONFIRMED
+  NO_SHOW
+  PENDING
+}
+
+"""Type of booking (daily or hourly)"""
+enum BookingType {
+  DAILY
+  HOURLY
+}
+
+type BookingsBySource {
+  count: Int!
+  source: String!
+}
+
+type BookingsByStatus {
+  count: Int!
+  status: String!
+}
+
+input BulkInventoryUpdateInput {
+  """Override available count"""
+  availableCount: Int
+  endDate: DateTime!
+
+  """Close/open dates for booking"""
+  isClosed: Boolean
+
+  """Minimum stay nights"""
+  minStayNights: Int
+
+  """Price override for the date range (null = use base price)"""
+  priceOverride: Float
+  roomTypeId: ID!
+  startDate: DateTime!
+}
+
+type BulkUpdateResult {
+  daysUpdated: Int!
+  message: String!
+  success: Boolean!
+}
+
+type CalendarDay {
+  available: Int!
+  date: String!
+  isClosed: Boolean!
+  price: Float!
+}
+
+"""Input for cancelling a booking"""
+input CancelBookingInput {
+  bookingId: String!
+  reason: String!
+}
+
+"""Change password for logged in user"""
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+"""Input for checking room availability"""
+input CheckAvailabilityInput {
+  checkInDate: DateTime!
+  checkOutDate: DateTime
+  hotelId: String!
+  numGuests: Int! = 2
+  numRooms: Int! = 1
+  roomTypeId: String
+}
+
+"""Input for checking hourly slot availability"""
+input CheckHourlyAvailabilityInput {
+  date: DateTime!
+  hotelId: String!
+  numHours: Int! = 3
+  numRooms: Int! = 1
+  roomTypeId: String
+  startTime: String
+}
+
+type ConfirmPaymentResult {
+  bookingId: String
+  bookingNumber: String
+  message: String!
+  success: Boolean!
+}
+
+input CreateApiKeyInput {
+  allowedOrigins: [String!]
+  expiresAt: DateTime
+  hotelId: String!
+  name: String!
+  permissions: [ApiKeyPermission!]
+  rateLimitPerMinute: Int
+}
+
+"""Create a new blog post"""
+input CreateBlogPostInput {
+  category: String
+  content: String!
+  coverImage: String
+  excerpt: String
+  hotelId: String
+  metaDescription: String
+  metaTitle: String
+  slug: String
+  tags: [String!]
+  title: String!
+}
+
+"""Input for creating a daily booking"""
+input CreateDailyBookingInput {
+  checkInDate: DateTime!
+  checkOutDate: DateTime!
+  couponCode: String
+  guestInfo: GuestInfoInput!
+  hotelId: String!
+  numExtraGuests: Int! = 0
+  numGuests: Int! = 2
+  numRooms: Int! = 1
+  roomTypeId: String!
+  source: BookingSource! = DIRECT
+  specialRequests: String
+}
+
+"""Input for creating an hourly booking"""
+input CreateHourlyBookingInput {
+  checkInTime: String!
+  date: DateTime!
+  guestInfo: GuestInfoInput!
+  hotelId: String!
+  numGuests: Int! = 2
+  numHours: Int!
+  numRooms: Int! = 1
+  roomTypeId: String!
+  source: BookingSource! = DIRECT
+  specialRequests: String
+}
+
+input CreateReviewInput {
+  bookingId: ID!
+  comment: String
+  photos: [String!] = []
+  rating: Int!
+  title: String
+}
+
+input CreateRoomTypeInput {
+  amenities: [String!]! = []
+  basePriceDaily: Float!
+  basePriceHourly: Float
+  description: String
+  extraGuestCharge: Float! = 0
+  hotelId: ID!
+  images: [String!]! = []
+  maxExtraGuests: Int! = 0
+  maxGuests: Int! = 2
+  name: String!
+  slug: String!
+  sortOrder: Int! = 0
+  totalRooms: Int! = 1
+}
+
+input CreateStaffInput {
+  email: String!
+  hotelId: ID!
+  name: String!
+  password: String!
+  permissions: StaffPermissionsInput
+  phone: String
+}
+
+type DailyAvailabilityResult {
+  checkIn: DateTime!
+  checkOut: DateTime!
+  hotelId: String!
+  nights: Int!
+  numRooms: Int!
+  roomTypes: [RoomTypeAvailability!]!
+  unavailableRoomTypes: [RoomTypeAvailability!]!
+}
+
+type DailyRevenue {
+  date: String!
+  revenue: Float!
+}
+
+type DateRange {
+  from: String!
+  to: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DeactivateResponse {
+  message: String!
+  success: Boolean!
+}
+
+type DeleteResult {
+  message: String!
+  success: Boolean!
+}
+
+type GeneratedApiKey {
+  apiKey: ApiKeyType!
+
+  """The full API key — shown only once, store it securely"""
+  plainTextKey: String!
+}
+
+type GuestAnalytics {
+  avgRating: Float!
+  newGuests: Int!
+  returningGuests: Int!
+  topGuests: [TopGuest!]!
+  totalGuests: Int!
+}
+
+"""Guest information for booking"""
+input GuestInfoInput {
+  email: String!
+  name: String!
+  phone: String!
+}
+
+"""Hotel entity"""
+type Hotel {
+  address: String!
+  averageRating: Float
+  bookingModel: BookingModel!
+  checkInTime: String!
+  checkOutTime: String!
+  city: String!
+  commissionRate: Float
+  country: String!
+  createdAt: DateTime!
+  description: String
+  email: String!
+  heroImageUrl: String
+  hourlyMaxHours: Int!
+  hourlyMinHours: Int!
+  id: ID!
+  isActive: Boolean!
+  latitude: Float
+  logoUrl: String
+  longitude: Float
+  name: String!
+  phone: String!
+  pincode: String!
+  razorpayAccountId: String
+  reviewCount: Int
+  reviews: [Review!]
+  roomTypes: [RoomType!]
+  slug: String!
+  starRating: Int!
+  startingPrice: Float
+  state: String!
+  stripeAccountId: String
+  template: HotelTemplate!
+  themeConfig: JSON
+  updatedAt: DateTime!
+  whatsapp: String
+}
+
+type HotelContentType {
+  description: String
+  heroImageUrl: String
+  id: ID!
+  logoUrl: String
+  name: String!
+  themeConfig: JSON
+}
+
+input HotelFiltersInput {
+  amenities: [String!]
+  checkInDate: DateTime
+  checkOutDate: DateTime
+  city: String
+  guests: Int
+  maxPrice: Float
+  minPrice: Float
+  minRating: Int
+  search: String
+  state: String
+}
+
+input HotelPaginationInput {
+  limit: Int! = 12
+  page: Int! = 1
+  sortBy: HotelSortBy = CREATED_AT
+  sortOrder: SortOrder = DESC
+}
+
+input HotelReplyInput {
+  reply: String!
+  reviewId: ID!
+}
+
+"""Field to sort hotels by"""
+enum HotelSortBy {
+  CREATED_AT
+  NAME
+  PRICE
+  RATING
+}
+
+"""Hotel website template style"""
+enum HotelTemplate {
+  HERITAGE_BOUTIQUE
+  LUXURY_RESORT
+  MODERN_MINIMAL
+  STARTER
+}
+
+type HourlyAvailabilityResult {
+  date: DateTime!
+  hotelId: String!
+  numHours: Int!
+  numRooms: Int!
+  roomTypes: [HourlyRoomTypeAvailability!]!
+}
+
+type HourlyRoomTypeAvailability {
+  isAvailable: Boolean!
+  maxHours: Int!
+  minHours: Int!
+  roomType: HourlyRoomTypeSummary!
+  slots: [HourlySlotInfo!]!
+}
+
+type HourlyRoomTypeSummary {
+  amenities: [String!]
+  basePriceHourly: Float
+  id: ID!
+  images: [String!]
+  name: String!
+}
+
+type HourlySlotInfo {
+  available: Int!
+  endTime: String!
+  isClosed: Boolean!
+  price: Float!
+  startTime: String!
+}
+
+type InboxActionResult {
+  success: Boolean!
+}
+
+type InboxNotification {
+  body: String
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  link: String
+  title: String!
+  type: String!
+}
+
+type InboxPage {
+  items: [InboxNotification!]!
+  unreadCount: Int!
+}
+
+type InitiatePaymentResult {
+  amount: Float!
+  bookingNumber: String!
+  currency: String!
+  gateway: String!
+  gatewayData: String
+  orderId: String!
+  paymentId: String!
+}
+
+type InventoryCalendar {
+  basePriceDaily: Float!
+  calendar: [InventoryCalendarDay!]!
+  roomTypeId: String!
+  roomTypeName: String!
+  totalRooms: Int!
+}
+
+type InventoryCalendarDay {
+  available: Int!
+  basePrice: Float!
+  date: String!
+  hasCustomAvailability: Boolean!
+  hasCustomPrice: Boolean!
+  isClosed: Boolean!
+  minStayNights: Int!
+  price: Float!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+"""Login with email and password"""
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LogoutResponse {
+  message: String!
+  success: Boolean!
+}
+
+"""Input for modifying booking dates"""
+input ModifyBookingInput {
+  bookingId: String!
+  checkInDate: DateTime
+  checkOutDate: DateTime
+  numGuests: Int
+  numRooms: Int
+  specialRequests: String
+}
+
+type MonthlyDataPoint {
+  bookings: Int!
+  month: String!
+  revenue: Float!
+}
+
+type Mutation {
+  """Apply pricing suggestions to room inventory"""
+  applyPriceSuggestions(input: ApplyPriceSuggestionsInput!): ApplySuggestionsResult!
+
+  """Approve and publish a guest review"""
+  approveReview(reviewId: ID!): Review!
+
+  """Archive a blog post"""
+  archiveBlogPost(id: ID!): BlogPost!
+
+  """Bulk update pricing and availability for a date range"""
+  bulkUpdateInventory(input: BulkInventoryUpdateInput!): BulkUpdateResult!
+
+  """Cancel a booking"""
+  cancelBooking(input: CancelBookingInput!): Booking!
+
+  """Change password for logged in user"""
+  changePassword(input: ChangePasswordInput!): LogoutResponse!
+
+  """Mark hotel setup as complete"""
+  completeSetup(hotelId: ID!): Hotel!
+
+  """Confirm payment after gateway processing"""
+  confirmPayment(gatewayPaymentId: String, gatewaySignature: String, paymentId: ID!): ConfirmPaymentResult!
+
+  """Create a new blog post"""
+  createBlogPost(input: CreateBlogPostInput!): BlogPost!
+
+  """Create a daily booking"""
+  createDailyBooking(input: CreateDailyBookingInput!): BookingResult!
+
+  """Create an hourly booking"""
+  createHourlyBooking(input: CreateHourlyBookingInput!): BookingResult!
+
+  """Submit a review for a completed booking"""
+  createReview(input: CreateReviewInput!): Review!
+
+  """Create a new room type"""
+  createRoomType(input: CreateRoomTypeInput!): RoomType!
+
+  """Create a new staff member for the hotel"""
+  createStaffMember(input: CreateStaffInput!): User!
+
+  """Deactivate current user's account"""
+  deactivateMyAccount: DeactivateResponse!
+
+  """Permanently delete an API key"""
+  deleteApiKey(keyId: ID!): ApiKeyDeleteResult!
+
+  """Delete a blog post permanently"""
+  deleteBlogPost(id: ID!): Boolean!
+
+  """Permanently delete account and anonymize all personal data (GDPR)"""
+  deleteMyAccount: DeactivateResponse!
+
+  """Deactivate a room type (soft delete)"""
+  deleteRoomType(id: ID!): DeleteResult!
+
+  """Delete SEO meta entry"""
+  deleteSeoMeta(id: ID!): DeleteResult!
+
+  """Remove a staff member"""
+  deleteStaffMember(hotelId: ID!, staffId: ID!): DeleteResult!
+
+  """
+  Generate a new API key for a hotel. Returns the full key once — store it securely.
+  """
+  generateApiKey(input: CreateApiKeyInput!): GeneratedApiKey!
+
+  """Login or register with Google ID token"""
+  googleLogin(idToken: String!): AuthResponse!
+
+  """Start payment process for a booking"""
+  initiatePayment(bookingId: ID!, method: String! = "card"): InitiatePaymentResult!
+
+  """Login with email and password"""
+  login(input: LoginInput!): AuthResponse!
+
+  """Logout and revoke refresh token"""
+  logout: LogoutResponse!
+
+  """Mark all notifications as read"""
+  markAllNotificationsRead: InboxActionResult!
+
+  """Mark a single notification as read"""
+  markNotificationRead(notificationId: ID!): InboxActionResult!
+
+  """Modify booking dates and details"""
+  modifyBooking(input: ModifyBookingInput!): Booking!
+
+  """Process refund for a cancelled booking"""
+  processRefund(amount: Float, bookingId: ID!): RefundResult!
+
+  """Publish a blog post"""
+  publishBlogPost(id: ID!): BlogPost!
+
+  """Refresh access token using refresh token"""
+  refreshToken(input: RefreshTokenInput!): AuthResponse!
+
+  """Register a new user"""
+  register(input: RegisterInput!): AuthResponse!
+
+  """Reject / unpublish a guest review"""
+  rejectReview(reviewId: ID!): Review!
+
+  """Hotel admin replies to a guest review"""
+  replyToReview(input: HotelReplyInput!): Review!
+
+  """Request OTP for phone login"""
+  requestOTP(input: RequestOTPInput!): OTPResponse!
+
+  """Request a password reset link via email"""
+  requestPasswordReset(input: RequestPasswordResetInput!): LogoutResponse!
+
+  """Resend email verification link"""
+  resendVerificationEmail(input: ResendVerificationInput!): LogoutResponse!
+
+  """Reset password using reset token"""
+  resetPassword(input: ResetPasswordInput!): LogoutResponse!
+
+  """Deactivate an API key (reversible)"""
+  revokeApiKey(keyId: ID!): ApiKeyDeleteResult!
+
+  """Revoke an existing key and generate a new one with the same settings"""
+  rotateApiKey(keyId: ID!): GeneratedApiKey!
+
+  """Update an API key's name, permissions, rate limit, or allowed origins"""
+  updateApiKey(input: UpdateApiKeyInput!): ApiKeyType!
+
+  """Update a blog post"""
+  updateBlogPost(input: UpdateBlogPostInput!): BlogPost!
+
+  """Update booking status"""
+  updateBookingStatus(input: UpdateBookingStatusInput!): Booking!
+
+  """Update inventory for a single date"""
+  updateDateInventory(input: SingleDateInventoryInput!): RoomInventory!
+
+  """Update hotel details (admin only)"""
+  updateHotel(input: UpdateHotelInput!): Hotel!
+
+  """Update hotel content and theme"""
+  updateHotelContent(input: UpdateHotelContentInput!): Hotel!
+
+  """Update user profile"""
+  updateProfile(input: UpdateProfileInput!): User!
+
+  """Update an existing room type"""
+  updateRoomType(input: UpdateRoomTypeInput!): RoomType!
+
+  """Update a staff member"""
+  updateStaffMember(input: UpdateStaffInput!): User!
+
+  """Create or update SEO meta for a page"""
+  upsertSeoMeta(input: UpsertSeoMetaInput!): SeoMetaType!
+
+  """Verify email address using token"""
+  verifyEmail(input: VerifyEmailInput!): LogoutResponse!
+
+  """Verify OTP and login/register"""
+  verifyOTP(input: VerifyOTPInput!): AuthResponse!
+}
+
+"""OTP send response"""
+type OTPResponse {
+  expiresAt: DateTime
+  message: String!
+  success: Boolean!
+}
+
+type OccupancyAnalytics {
+  maxRoomNights: Int!
+  occupancyByRoomType: [OccupancyByRoomType!]!
+  occupancyRate: Int!
+  period: String!
+  totalRoomNights: Int!
+  totalRooms: Int!
+}
+
+type OccupancyByRoomType {
+  bookedRoomNights: Int!
+  occupancy: Int!
+  roomType: String!
+  totalRooms: Int!
+}
+
+type OccupancyForecastDay {
+  date: String!
+  occupancyRate: Float!
+  revenue: Float!
+}
+
+input OccupancyForecastInput {
+  days: Int = 30
+  hotelId: String!
+}
+
+"""Paginated blog posts"""
+type PaginatedBlogPosts {
+  page: Float!
+  posts: [BlogPost!]!
+  total: Float!
+  totalPages: Float!
+}
+
+"""Paginated bookings result"""
+type PaginatedBookings {
+  bookings: [Booking!]!
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+"""Paginated hotels response"""
+type PaginatedHotels {
+  hasMore: Boolean!
+  hotels: [Hotel!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+"""Payment entity"""
+type Payment {
+  amount: Float!
+  bookingId: String!
+  createdAt: DateTime!
+  currency: String!
+  gateway: String!
+  gatewayOrderId: String
+  gatewayPaymentId: String
+  id: ID!
+  metadata: JSON
+  refundAmount: Float!
+  refundId: String
+  status: String!
+  updatedAt: DateTime!
+}
+
+"""Payment status of the booking"""
+enum PaymentStatus {
+  FAILED
+  PAID
+  PARTIALLY_REFUNDED
+  PENDING
+  REFUNDED
+}
+
+type PopularCity {
+  city: String!
+  hotelCount: Int!
+  state: String!
+}
+
+"""Status of a blog post"""
+enum PostStatus {
+  ARCHIVED
+  DRAFT
+  PUBLISHED
+}
+
+input PriceApplyItem {
+  date: String!
+  price: Float!
+}
+
+type PriceSuggestionGQL {
+  changePercent: Float!
+  currentPrice: Float!
+  date: String!
+  demandLevel: String!
+  occupancyRate: Float!
+  reason: String!
+  suggestedPrice: Float!
+}
+
+input PriceSuggestionsInput {
+  fromDate: String!
+  roomTypeId: String!
+  toDate: String!
+}
+
+type PricingAnalysisGQL {
+  averageOccupancy: Float!
+  basePrice: Float!
+  period: DateRange!
+  revenue: RevenueProjection!
+  roomTypeId: String!
+  roomTypeName: String!
+  suggestions: [PriceSuggestionGQL!]!
+}
+
+type Query {
+  """Get hotel analytics data"""
+  adminAnalytics(hotelId: ID!, months: Int = 6): AdminAnalytics!
+
+  """Get a blog post by ID for admin"""
+  adminBlogPost(id: ID!): BlogPost!
+
+  """Get all blog posts for admin (including drafts)"""
+  adminBlogPosts(hotelId: ID, limit: Int = 20, page: Int = 1, status: String): PaginatedBlogPosts!
+
+  """Get dashboard stats for hotel admin"""
+  adminDashboardStats(hotelId: ID!): AdminDashboardStats!
+
+  """Get hotel content (description, images, theme)"""
+  adminHotelContent(hotelId: ID!): HotelContentType!
+
+  """Get inventory calendar for admin pricing management"""
+  adminInventoryCalendar(endDate: DateTime!, roomTypeId: ID!, startDate: DateTime!): InventoryCalendar!
+
+  """Get all room types for admin (including inactive)"""
+  adminRoomTypes(hotelId: ID!): [RoomType!]!
+
+  """Get all SEO meta entries for a hotel"""
+  adminSeoMeta(hotelId: ID!): [SeoMetaType!]!
+
+  """Get availability calendar for a room type"""
+  availabilityCalendar(endDate: DateTime!, roomTypeId: ID!, startDate: DateTime!): AvailabilityCalendar!
+
+  """Get blog categories"""
+  blogCategories(hotelId: ID): [String!]!
+
+  """Get a published blog post by slug"""
+  blogPostBySlug(slug: String!): BlogPost!
+
+  """Get published blog posts with pagination"""
+  blogPosts(category: String, hotelId: ID, limit: Int = 10, page: Int = 1, search: String, tag: String): PaginatedBlogPosts!
+
+  """Get all blog tags"""
+  blogTags(hotelId: ID): [String!]!
+
+  """Get booking by ID"""
+  booking(id: ID!): Booking!
+
+  """Get booking analytics for a hotel"""
+  bookingAnalytics(hotelId: ID!, period: String = "30d"): BookingAnalytics!
+
+  """Get booking by booking number"""
+  bookingByNumber(bookingNumber: String!): Booking!
+
+  """List bookings with filters"""
+  bookings(filters: BookingFiltersInput, pagination: BookingPaginationInput): PaginatedBookings!
+
+  """Check if a booking can be reviewed"""
+  canReviewBooking(bookingId: ID!): Boolean!
+
+  """Check room availability for daily booking"""
+  checkDailyAvailability(input: CheckAvailabilityInput!): DailyAvailabilityResult!
+
+  """Check room availability for hourly booking"""
+  checkHourlyAvailability(input: CheckHourlyAvailabilityInput!): HourlyAvailabilityResult!
+
+  """Get featured hotels"""
+  featuredHotels(limit: Float = 6): [Hotel!]!
+
+  """Get guest analytics for a hotel"""
+  guestAnalytics(hotelId: ID!, period: String = "30d"): GuestAnalytics!
+
+  """Get hotel by ID"""
+  hotel(id: ID!): Hotel!
+
+  """Get all reviews for hotel (admin view, includes unpublished)"""
+  hotelAllReviews: [Review!]!
+
+  """Get hotel by slug"""
+  hotelBySlug(slug: String!): Hotel
+
+  """Get review stats for a hotel"""
+  hotelReviewStats(hotelId: ID!): ReviewStats!
+
+  """Get published reviews for a hotel"""
+  hotelReviews(hotelId: ID!, limit: Int = 10, page: Int = 1, sortBy: String = "newest"): ReviewsPage!
+
+  """List all staff members for the hotel"""
+  hotelStaff(hotelId: ID!): [User!]!
+
+  """Get paginated hotels"""
+  hotels(filters: HotelFiltersInput, pagination: HotelPaginationInput): PaginatedHotels!
+
+  """Get current logged in user"""
+  me: User!
+
+  """List all API keys for the authenticated hotel"""
+  myApiKeys(hotelId: ID!): [ApiKeyType!]!
+
+  """Get current user's bookings"""
+  myBookings(limit: Int = 10, offset: Int = 0): [Booking!]!
+
+  """Get all reviews submitted by the logged-in guest"""
+  myGuestReviews: [Review!]!
+
+  """Get in-app notifications for the current user"""
+  myNotifications(limit: Int = 20, offset: Int = 0): InboxPage!
+
+  """Get current user's reviews"""
+  myReviews(limit: Int = 10, offset: Int = 0): [Review!]!
+
+  """Get occupancy analytics for a hotel"""
+  occupancyAnalytics(hotelId: ID!, period: String = "30d"): OccupancyAnalytics!
+
+  """Get occupancy forecast for the next N days"""
+  occupancyForecast(input: OccupancyForecastInput!): [OccupancyForecastDay!]!
+
+  """Get all payments for a booking"""
+  paymentsByBooking(bookingId: ID!): [Payment!]!
+
+  """Get popular cities"""
+  popularCities(limit: Float = 10): [PopularCity!]!
+
+  """Get AI-powered pricing suggestions for a room type"""
+  priceSuggestions(input: PriceSuggestionsInput!): PricingAnalysisGQL!
+
+  """Get revenue analytics for a hotel"""
+  revenueAnalytics(hotelId: ID!, period: String = "30d"): RevenueAnalytics!
+
+  """Get room type by ID"""
+  roomType(id: ID!): RoomType!
+
+  """Get room types for a hotel"""
+  roomTypes(filters: RoomTypeFiltersInput, hotelId: ID!): [RoomType!]!
+
+  """Quick search hotels"""
+  searchHotels(limit: Float = 10, query: String!): [Hotel!]!
+
+  """Get setup wizard status for the hotel"""
+  setupStatus(hotelId: ID!): SetupStatus!
+
+  """Get current user profile"""
+  userProfile: User!
+}
+
+"""Refresh token input"""
+input RefreshTokenInput {
+  refreshToken: String!
+}
+
+type RefundResult {
+  amount: Float
+  message: String!
+  refundId: String
+  success: Boolean!
+}
+
+"""Register new user"""
+input RegisterInput {
+  email: String!
+  name: String!
+  password: String!
+  phone: String
+}
+
+"""Request OTP for phone login"""
+input RequestOTPInput {
+  phone: String!
+}
+
+"""Reset password request"""
+input RequestPasswordResetInput {
+  email: String!
+}
+
+"""Resend verification email"""
+input ResendVerificationInput {
+  email: String!
+}
+
+"""Reset password with token"""
+input ResetPasswordInput {
+  newPassword: String!
+  token: String!
+}
+
+type RevenueAnalytics {
+  bookingCount: Int!
+  dailyRevenue: [DailyRevenue!]!
+  previousBookingCount: Int!
+  previousRevenue: Float!
+  revenueBySource: [RevenueBySource!]!
+  revenueGrowth: Float!
+  totalRevenue: Float!
+}
+
+type RevenueBySource {
+  bookings: Int!
+  revenue: Float!
+  source: String!
+}
+
+type RevenueProjection {
+  current: Float!
+  projected: Float!
+  uplift: Float!
+}
+
+"""Guest review entity"""
+type Review {
+  bookingId: String!
+  comment: String
+  createdAt: DateTime!
+  guest: ReviewGuest
+  guestId: String!
+  hotelId: String!
+  hotelReply: String
+  id: ID!
+  isPublished: Boolean!
+  isVerified: Boolean!
+  photos: [String!]!
+  rating: Int!
+  title: String
+  updatedAt: DateTime!
+}
+
+type ReviewGuest {
+  avatarUrl: String
+  name: String!
+}
+
+type ReviewStats {
+  averageRating: Float!
+  ratingDistribution: [Int!]!
+  totalReviews: Int!
+}
+
+type ReviewsPage {
+  page: Int!
+  reviews: [Review!]!
+  total: Int!
+  totalPages: Int!
+}
+
+"""Room inventory for a specific date"""
+type RoomInventory {
+  availableCount: Int!
+  date: DateTime!
+  id: ID!
+  isClosed: Boolean!
+  minStayNights: Int!
+  priceOverride: Float
+  roomTypeId: String!
+}
+
+"""Room type entity"""
+type RoomType {
+  amenities: [String!]!
+  availableTonight: Int
+  basePriceDaily: Float!
+  basePriceHourly: Float
+  bookingModelOverride: BookingModel
+  createdAt: DateTime!
+  description: String
+  extraGuestCharge: Float!
+  hotelId: String!
+  id: ID!
+  images: [String!]!
+  isActive: Boolean!
+  maxExtraGuests: Int!
+  maxGuests: Int!
+  maxHours: Int
+  minHours: Int
+  name: String!
+  slug: String!
+  sortOrder: Int!
+  totalRooms: Int!
+  updatedAt: DateTime!
+}
+
+type RoomTypeAvailability {
+  isAvailable: Boolean!
+  minAvailable: Int!
+  nights: Int!
+  pricePerNight: Float!
+  roomType: RoomTypeSummary!
+  totalPrice: Float!
+}
+
+"""Input for fetching room types"""
+input RoomTypeFiltersInput {
+  amenities: [String!]
+  hotelId: String
+  includeHourly: Boolean
+  maxPrice: Float
+  minGuests: Int
+  minPrice: Float
+}
+
+type RoomTypePopularity {
+  bookings: Int!
+  revenue: Float!
+  roomTypeName: String!
+}
+
+type RoomTypeSummary {
+  amenities: [String!]!
+  basePriceDaily: Float!
+  id: ID!
+  images: [String!]!
+  maxGuests: Int!
+  name: String!
+  slug: String!
+}
+
+type SeoMetaType {
+  canonicalUrl: String
+  createdAt: DateTime!
+  customJsonLd: JSON
+  hotelId: String!
+  id: ID!
+  metaDescription: String
+  metaTitle: String
+  ogImageUrl: String
+  pageSlug: String!
+  updatedAt: DateTime!
+}
+
+type SetupStatus {
+  hotelId: ID!
+  setupCompleted: Boolean!
+  steps: SetupSteps!
+}
+
+type SetupSteps {
+  basicInfo: Boolean!
+  contactInfo: Boolean!
+  gallery: Boolean!
+  policies: Boolean!
+  rooms: Boolean!
+}
+
+input SingleDateInventoryInput {
+  availableCount: Int
+  date: DateTime!
+  isClosed: Boolean
+  minStayNights: Int
+  priceOverride: Float
+  roomTypeId: ID!
+}
+
+"""Sort order"""
+enum SortOrder {
+  ASC
+  DESC
+}
+
+type SourceBreakdown {
+  count: Int!
+  revenue: Float!
+  source: String!
+}
+
+"""Staff permission flags"""
+type StaffPermission {
+  canManageBookings: Boolean!
+  canManageContent: Boolean!
+  canManagePricing: Boolean!
+  canManageReviews: Boolean!
+  canManageRooms: Boolean!
+  canManageStaff: Boolean!
+  canViewAnalytics: Boolean!
+  id: ID!
+}
+
+input StaffPermissionsInput {
+  canManageBookings: Boolean = true
+  canManageContent: Boolean = false
+  canManagePricing: Boolean = false
+  canManageReviews: Boolean = true
+  canManageRooms: Boolean = false
+  canManageStaff: Boolean = false
+  canViewAnalytics: Boolean = false
+}
+
+type StatusBreakdown {
+  count: Int!
+  status: String!
+}
+
+type TopGuest {
+  bookingCount: Int!
+  email: String
+  guestId: String!
+  name: String!
+  totalSpent: Float!
+}
+
+type TopHotelRevenue {
+  bookings: Int!
+  city: String!
+  hotelId: String!
+  name: String!
+  revenue: Float!
+}
+
+type TopRoomType {
+  bookings: Int!
+  revenue: Float!
+  roomType: String!
+}
+
+type TypeBreakdown {
+  count: Int!
+  type: String!
+}
+
+input UpdateApiKeyInput {
+  allowedOrigins: [String!]
+  expiresAt: DateTime
+  id: String!
+  isActive: Boolean
+  name: String
+  permissions: [ApiKeyPermission!]
+  rateLimitPerMinute: Int
+}
+
+"""Update a blog post"""
+input UpdateBlogPostInput {
+  category: String
+  content: String
+  coverImage: String
+  excerpt: String
+  id: String!
+  metaDescription: String
+  metaTitle: String
+  slug: String
+  tags: [String!]
+  title: String
+}
+
+"""Input for updating booking status"""
+input UpdateBookingStatusInput {
+  assignedRoomId: String
+  bookingId: String!
+  status: BookingStatus!
+}
+
+input UpdateHotelContentInput {
+  description: String
+  heroImageUrl: String
+  hotelId: ID!
+  logoUrl: String
+
+  """Theme config: { primaryColor, fontFamily, etc. }"""
+  themeConfig: JSON
+}
+
+input UpdateHotelInput {
+  address: String
+  bookingModel: BookingModel
+  checkInTime: String
+  checkOutTime: String
+  city: String
+  description: String
+  email: String
+  heroImageUrl: String
+  hotelId: ID!
+  hourlyMaxHours: Int
+  hourlyMinHours: Int
+  latitude: Float
+  logoUrl: String
+  longitude: Float
+  name: String
+  phone: String
+  pincode: String
+  razorpayAccountId: String
+  starRating: Int
+  state: String
+  stripeAccountId: String
+  template: HotelTemplate
+  themeConfig: JSON
+  whatsapp: String
+}
+
+"""Update user profile input"""
+input UpdateProfileInput {
+  avatarUrl: String
+  email: String
+  name: String
+  phone: String
+}
+
+input UpdateRoomTypeInput {
+  amenities: [String!]
+  basePriceDaily: Float
+  basePriceHourly: Float
+  description: String
+  extraGuestCharge: Float
+  id: ID!
+  images: [String!]
+  isActive: Boolean
+  maxExtraGuests: Int
+  maxGuests: Int
+  name: String
+  sortOrder: Int
+  totalRooms: Int
+}
+
+input UpdateStaffInput {
+  email: String
+  hotelId: ID!
+  isActive: Boolean
+  name: String
+  permissions: StaffPermissionsInput
+  phone: String
+  staffId: ID!
+}
+
+input UpsertSeoMetaInput {
+  canonicalUrl: String
+  customJsonLd: JSON
+  hotelId: ID!
+  metaDescription: String
+  metaTitle: String
+  ogImageUrl: String
+
+  """
+  Page identifier e.g. "homepage", "rooms", "contact"
+  """
+  pageSlug: String!
+}
+
+"""User entity"""
+type User {
+  avatarUrl: String
+  createdAt: DateTime!
+  email: String
+  emailVerified: Boolean!
+  hotelId: String
+  id: ID!
+  isActive: Boolean!
+  lastLoginAt: DateTime
+  name: String!
+  phone: String
+  phoneVerified: Boolean!
+  role: UserRole!
+  staffPermission: StaffPermission
+  updatedAt: DateTime!
+}
+
+"""User role type"""
+enum UserRole {
+  GUEST
+  HOTEL_ADMIN
+  HOTEL_STAFF
+}
+
+"""Verify email address"""
+input VerifyEmailInput {
+  token: String!
+}
+
+"""Verify OTP"""
+input VerifyOTPInput {
+  otp: String!
+  phone: String!
+}
