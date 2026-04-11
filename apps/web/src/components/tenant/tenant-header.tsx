@@ -31,6 +31,11 @@ export function TenantHeader() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -47,7 +52,8 @@ export function TenantHeader() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isMobileMenuOpen]);
 
-  const isTransparent = theme.headerStyle === 'transparent' && !isScrolled;
+  // Defer client-dependent styles until after hydration to prevent mismatch
+  const isTransparent = mounted && theme.headerStyle === 'transparent' && !isScrolled;
 
   return (
     <>
@@ -59,8 +65,8 @@ export function TenantHeader() {
             : 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100'
         )}
       >
-        {/* Top bar */}
-        {hotel?.phone && (
+        {/* Top bar — only rendered after hydration to avoid mismatch */}
+        {mounted && hotel?.phone && (
           <div
             className={cn(
               'hidden lg:block border-b transition-colors duration-300',
@@ -111,7 +117,7 @@ export function TenantHeader() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              {hotel?.logoUrl ? (
+              {mounted && hotel?.logoUrl ? (
                 <Image
                   src={hotel.logoUrl}
                   alt={hotel.name || 'Hotel'}
@@ -165,15 +171,15 @@ export function TenantHeader() {
                 <Button
                   size="sm"
                   className="hidden sm:inline-flex"
-                  style={{
+                  style={mounted ? {
                     backgroundColor: theme.primaryColor || undefined,
-                  }}
+                  } : undefined}
                 >
                   Book Now
                 </Button>
               </Link>
 
-              {isAuthenticated ? (
+              {isAuthenticated && mounted ? (
                 <div className="flex items-center gap-2">
                   <Link
                     href="/dashboard"
